@@ -10,6 +10,12 @@ import org.springframework.security.config.Customizer;
 @Configuration
 public class SecurityConfig {
 
+    private final KeycloakJwtAuthenticationConverter keycloakJwtConverter;
+
+    public SecurityConfig(KeycloakJwtAuthenticationConverter keycloakJwtConverter) {
+        this.keycloakJwtConverter = keycloakJwtConverter;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -19,8 +25,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(Customizer.withDefaults())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(keycloakJwtConverter))
                 );
 
         return http.build();
