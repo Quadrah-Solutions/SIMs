@@ -17,6 +17,12 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
     // Find users by role
     List<UserAccount> findByRole(UserAccount.UserRole role);
 
+    // Find users by multiple roles
+    List<UserAccount> findByRoleIn(List<UserAccount.UserRole> roles);
+
+    // Find active users by multiple roles
+    List<UserAccount> findByRoleInAndIsActiveTrue(List<UserAccount.UserRole> roles);
+
     // Find by keycloak Id
     Optional<UserAccount> findByKeycloakId(String keycloakId);
 
@@ -43,6 +49,15 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
         return findByRoleAndIsActiveTrue(UserAccount.UserRole.TEACHER);
     }
 
-    boolean existsByKeycloakId(String keycloakId);
+    // Find admins (common query)
+    default List<UserAccount> findAdmins() {
+        return findByRoleAndIsActiveTrue(UserAccount.UserRole.ADMIN);
+    }
 
+    // Find nurses and admins (common query for notifications)
+    default List<UserAccount> findNursesAndAdmins() {
+        return findByRoleInAndIsActiveTrue(List.of(UserAccount.UserRole.NURSE, UserAccount.UserRole.ADMIN));
+    }
+
+    boolean existsByKeycloakId(String keycloakId);
 }

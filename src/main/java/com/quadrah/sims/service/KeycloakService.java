@@ -1,10 +1,11 @@
 package com.quadrah.sims.service;
 
 import com.quadrah.sims.model.UserAccount;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,32 +16,27 @@ public class KeycloakService {
 
     private final UserAccountService userAccountService;
 
-    public KeycloakService(@Lazy UserAccountService userAccountService) {
+    public KeycloakService(UserAccountService userAccountService) {
         this.userAccountService = userAccountService;
     }
 
     public String getCurrentUserId() {
-        KeycloakAuthenticationToken authentication =
-                (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAccount().getKeycloakSecurityContext().getToken().getSubject();
+        Jwt jwt = getJwt();
+        return jwt.getSubject();
     }
 
     public String getCurrentUsername() {
-        KeycloakAuthenticationToken authentication =
-                (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAccount().getKeycloakSecurityContext().getToken().getPreferredUsername();
+        Jwt jwt = getJwt();
+        return jwt.getClaim("preferred_username");
     }
 
     public String getCurrentUserEmail() {
-        KeycloakAuthenticationToken authentication =
-                (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getAccount().getKeycloakSecurityContext().getToken().getEmail();
+        Jwt jwt = getJwt();
+        return jwt.getClaim("email");
     }
 
     public List<String> getCurrentUserRoles() {
-        KeycloakAuthenticationToken authentication =
-                (KeycloakAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
@@ -48,7 +44,8 @@ public class KeycloakService {
 
     public boolean hasRole(String role) {
         List<String> roles = getCurrentUserRoles();
-        return roles.contains("ROLE_" + role.toUpperCase()) || roles.contains(role.toUpperCase());
+        String roleWithPrefix = "ROLE_" + role.toUpperCase();
+        return roles.contains(roleWithPrefix) || roles.contains(role.toUpperCase());
     }
 
     public boolean isNurse() {
@@ -63,15 +60,17 @@ public class KeycloakService {
         return hasRole("TEACHER");
     }
 
-    // Helper method for security expressions - use getCurrentUserId directly
     public boolean isCurrentUser(Long userId) {
-        try {
-            String currentKeycloakId = getCurrentUserId();
-            UserAccount currentUser = userAccountService.getUserByKeycloakId(currentKeycloakId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
-            return currentUser.getId().equals(userId);
-        } catch (Exception e) {
-            return false;
+        UserAccount currentUser = userAccountService.getCurrentUser();
+        return currentUser.getId().equals(userId);
+    }
+
+    private Jwt getJwt() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+            return jwtAuth.getToken();
         }
+        throw new IllegalStateException("Cannot get JWT from authentication");
     }
 }
