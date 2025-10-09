@@ -2,6 +2,11 @@ package com.quadrah.sims.controller;
 
 import com.quadrah.sims.model.Student;
 import com.quadrah.sims.service.StudentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +16,9 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/students")
+@RequestMapping("/api/students")
+@Tag(name = "Student Management", description = "APIs for managing student records and health information")
+@SecurityRequirement(name = "bearerAuth")
 public class StudentController {
 
     private final StudentService studentService;
@@ -20,12 +27,30 @@ public class StudentController {
         this.studentService = studentService;
     }
 
+    @Operation(
+            summary = "Get all students",
+            description = "Retrieve a list of all students with their basic information"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved students"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions")
+    })
     @GetMapping
     public ResponseEntity<List<Student>> getAllStudents() {
         List<Student> students = studentService.getAllStudents();
         return ResponseEntity.ok(students);
     }
 
+    @Operation(
+            summary = "Get student by ID",
+            description = "Retrieve a specific student by their unique identifier"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Student found"),
+            @ApiResponse(responseCode = "404", description = "Student not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
         Optional<Student> student = studentService.getStudentById(id);
@@ -40,6 +65,10 @@ public class StudentController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(
+            summary = "Get students by grade level",
+            description = "Retrieve all students in a specific grade level"
+    )
     @GetMapping("/grade/{gradeLevel}")
     public ResponseEntity<List<Student>> getStudentsByGradeLevel(@PathVariable String gradeLevel) {
         List<Student> students = studentService.getStudentsByGradeLevel(gradeLevel);
@@ -52,12 +81,29 @@ public class StudentController {
         return ResponseEntity.ok(students);
     }
 
+    @Operation(
+            summary = "Search students by name",
+            description = "Search for students by first name or last name (case-insensitive)"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Search completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid search parameter")
+    })
     @GetMapping("/search")
     public ResponseEntity<List<Student>> searchStudents(@RequestParam String name) {
         List<Student> students = studentService.searchStudentsByName(name);
         return ResponseEntity.ok(students);
     }
 
+    @Operation(
+            summary = "Create a new student",
+            description = "Create a new student record with health information"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Student created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "409", description = "Student ID already exists")
+    })
     @PostMapping
     public ResponseEntity<Student> createStudent(@Valid @RequestBody Student student) {
         Student createdStudent = studentService.createStudent(student);

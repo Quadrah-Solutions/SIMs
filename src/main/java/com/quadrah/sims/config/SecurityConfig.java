@@ -26,7 +26,35 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Allow Swagger/OpenAPI endpoints without authentication
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/api-docs/**",
+                                "/webjars/**",
+                                "/swagger-resources/**",
+                                "/configuration/**",
+                                "/swagger-ui/*.html",
+                                "/swagger-ui/*.css",
+                                "/swagger-ui/*.js",
+                                "/swagger-ui/*.png"
+                        ).permitAll()
+
+                        // Allow public endpoints (if any)
+                        .requestMatchers("/api/public/**").permitAll()
+
+                        // Allow CORS preflight requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Secure your API endpoints
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/visits/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers("/api/medications/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers("/api/students/**").hasAnyRole("NURSE", "ADMIN", "TEACHER")
+                        .requestMatchers("/api/notifications/**").authenticated()
+
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

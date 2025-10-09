@@ -1,18 +1,40 @@
 package com.quadrah.sims.dto;
 
 import com.quadrah.sims.model.Notification;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
+@Schema(description = "Notification data transfer object")
 public class NotificationDTO {
+
+    @Schema(description = "Notification ID", example = "1")
     private Long id;
+
+    @Schema(description = "Notification title", example = "🚨 Emergency Visit Alert")
     private String title;
+
+    @Schema(description = "Notification message", example = "Emergency visit for John Smith (Grade: 10). Reason: Severe allergic reaction")
     private String message;
+
+    @Schema(description = "Notification type", example = "EMERGENCY_VISIT")
     private String type;
+
+    @Schema(description = "Notification status", example = "UNREAD")
     private String status;
+
+    @Schema(description = "Creation timestamp")
     private LocalDateTime createdAt;
+
+    @Schema(description = "Read timestamp (null if unread)")
     private LocalDateTime readAt;
+
+    @Schema(description = "Related entity type", example = "StudentVisit")
     private String relatedEntityType;
+
+    @Schema(description = "Related entity ID", example = "123")
     private Long relatedEntityId;
+
+    @Schema(description = "Recipient user information")
     private UserDTO recipient;
 
     // Constructor from Entity
