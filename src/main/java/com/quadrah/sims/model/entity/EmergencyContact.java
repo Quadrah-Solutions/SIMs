@@ -1,9 +1,10 @@
-package com.quadrah.sims.model;
+package com.quadrah.sims.model.entity;
 
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "emergency_contacts")
+
 public class EmergencyContact {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

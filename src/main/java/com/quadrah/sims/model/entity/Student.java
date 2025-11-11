@@ -1,5 +1,6 @@
-package com.quadrah.sims.model;
+package com.quadrah.sims.model.entity;
 
+import com.quadrah.sims.model.Gender;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,8 +31,8 @@ public class Student {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "gender")
-    private String gender;
+    @Column(name = "gender", nullable = false)
+    private Gender gender;
 
     @Column(name = "special_notes", length = 1000)
     private String specialNotes;
@@ -66,8 +67,8 @@ public class Student {
     public void setHomeroom(String homeroom) { this.homeroom = homeroom; }
     public LocalDate getDateOfBirth() { return dateOfBirth; }
     public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+    public Gender getGender() { return gender; }
+    public void setGender(Gender gender) { this.gender = gender; }
     public String getSpecialNotes() { return specialNotes; }
     public void setSpecialNotes(String specialNotes) { this.specialNotes = specialNotes; }
     public List<StudentVisit> getVisits() { return visits; }
