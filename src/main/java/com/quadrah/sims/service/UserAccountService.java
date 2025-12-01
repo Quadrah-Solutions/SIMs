@@ -2,6 +2,7 @@ package com.quadrah.sims.service;
 
 import com.quadrah.sims.model.UserAccount;
 import com.quadrah.sims.repository.UserAccountRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,7 @@ public class UserAccountService {
     private final UserAccountRepository userAccountRepository;
     private final KeycloakService keycloakService;
 
-    public UserAccountService(UserAccountRepository userAccountRepository, KeycloakService keycloakService) {
+    public UserAccountService(UserAccountRepository userAccountRepository, @Lazy KeycloakService keycloakService) {
         this.userAccountRepository = userAccountRepository;
         this.keycloakService = keycloakService;
     }
@@ -52,7 +53,7 @@ public class UserAccountService {
     public UserAccount getCurrentUser() {
         String keycloakId = keycloakService.getCurrentUserId();
         return userAccountRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found in local database"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found in local database with Keycloak ID: " + keycloakId));
     }
 
     // ADDED: Create user method

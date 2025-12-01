@@ -42,13 +42,13 @@ public class Student {
     private List<StudentVisit> visits = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Allergy> allergies = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<MedicalHistory> medicalHistories = new ArrayList<>();
 
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
 
     // Constructors, getters, and setters
