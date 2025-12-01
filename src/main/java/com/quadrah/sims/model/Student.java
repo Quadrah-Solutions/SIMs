@@ -1,5 +1,6 @@
 package com.quadrah.sims.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -36,9 +37,11 @@ public class Student {
     @Column(name = "special_notes", length = 1000)
     private String specialNotes;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<StudentVisit> visits = new ArrayList<>();
 
+    @JsonIgnore
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Allergy> allergies = new ArrayList<>();
 

@@ -6,6 +6,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "user_accounts")
 public class UserAccount {
@@ -13,11 +18,11 @@ public class UserAccount {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "keycloak_id", unique = true)
+    private String keycloakId; // Keycloak user ID
+
     @Column(name = "username", unique = true, nullable = false)
     private String username;
-
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -56,13 +61,13 @@ public class UserAccount {
     // Constructors, getters, and setters
     public UserAccount() {}
 
-    // Getters and setters
+    // Remove password-related methods
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    public String getKeycloakId() { return keycloakId; }
+    public void setKeycloakId(String keycloakId) { this.keycloakId = keycloakId; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public String getLastName() { return lastName; }
