@@ -87,9 +87,14 @@ public class UserAccountController {
     public ResponseEntity<UserAccount> createUser(@Valid @RequestBody UserAccount user) {
         // Note: User creation should primarily happen through Keycloak
         // This endpoint is for creating local user records after Keycloak user creation
-        UserAccount createdUser = userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        try{
+            UserAccount createdUser = userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
+
 
     @PostMapping("/sync-keycloak")
     public ResponseEntity<UserAccount> syncWithKeycloak(@RequestBody SyncUserRequest syncRequest) {

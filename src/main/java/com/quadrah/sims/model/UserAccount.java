@@ -33,6 +33,8 @@ public class UserAccount {
     @Column(name = "email")
     private String email;
 
+    @Column(name = "password")
+    private String password;
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private UserRole role;
@@ -76,6 +78,9 @@ public class UserAccount {
     public void setEmail(String email) { this.email = email; }
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
     public LocalDateTime getLastLogin() { return lastLogin; }

@@ -38,7 +38,7 @@ public class Student {
     private String specialNotes;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<StudentVisit> visits = new ArrayList<>();
 
     @JsonIgnore
@@ -51,7 +51,6 @@ public class Student {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<EmergencyContact> emergencyContacts = new ArrayList<>();
 
-    // Constructors, getters, and setters
     public Student() {}
 
     // Add all getters and setters

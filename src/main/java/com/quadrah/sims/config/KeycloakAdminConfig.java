@@ -19,20 +19,28 @@ public class KeycloakAdminConfig {
     @Value("${keycloak.realm}")
     private String realm;
 
-    @Value("${keycloak.resource}")
-    private String clientId;
+    @Value("${keycloak.admin.client-id}")  // Changed
+    private String adminClientId;          // Changed
 
-    @Value("${keycloak.credentials.secret}")
-    private String clientSecret;
+    @Value("${keycloak.admin.client-secret}")  // Changed
+    private String adminClientSecret;          // Changed
+
+    @Value("${keycloak.admin.username}")
+    private String adminUsername;
+
+    @Value("${keycloak.admin.password}")
+    private String adminPassword;
 
     @Bean
-    public Keycloak keycloak() {
+    public Keycloak keycloakAdmin() {  // Renamed for clarity
         return KeycloakBuilder.builder()
                 .serverUrl(serverUrl)
                 .realm(realm)
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                .clientId(clientId)
-                .clientSecret(clientSecret)
+                .clientId(adminClientId)      // Use admin client ID
+                .clientSecret(adminClientSecret)  // Use admin client secret
+                .username(adminUsername)
+                .password(adminPassword)
                 .resteasyClient(
                         new ResteasyClientBuilderImpl()
                                 .connectionPoolSize(20)

@@ -2,6 +2,11 @@ package com.quadrah.sims.controller;
 
 import com.quadrah.sims.model.StudentVisit;
 import com.quadrah.sims.service.StudentVisitService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -13,6 +18,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/visits")
+@Tag(name = "Student Visit Management", description = "APIs for managing student visit records and health information")
+@SecurityRequirement(name = "bearerAuth")
 public class StudentVisitController {
 
     private final StudentVisitService visitService;
@@ -21,6 +28,15 @@ public class StudentVisitController {
         this.visitService = visitService;
     }
 
+    @Operation(
+            summary = "Get all visits",
+            description = "Retrieve a list of all visits with their basic information"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved visits"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions")
+    })
     @GetMapping
     public ResponseEntity<List<StudentVisit>> getAllVisits() {
         List<StudentVisit> visits = visitService.getAllVisits();
