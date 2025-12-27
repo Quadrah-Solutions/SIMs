@@ -3,6 +3,9 @@ package com.quadrah.sims.repository;
 import com.quadrah.sims.model.Student;
 import com.quadrah.sims.model.StudentVisit;
 import com.quadrah.sims.model.UserAccount;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -73,4 +76,71 @@ public interface StudentVisitRepository extends JpaRepository<StudentVisit, Long
     // Find recent visits (last 30 days)
     @Query("SELECT v FROM StudentVisit v WHERE v.visitDate >= :date ORDER BY v.visitDate DESC")
     List<StudentVisit> findRecentVisits(@Param("date") LocalDateTime date);
+
+
+    @Query(value = "SELECT COUNT(DISTINCT s.id) FROM StudentVisit v JOIN v.student s WHERE v.visitDate BETWEEN :startDate AND :endDate")
+    Object[] countUniqueStudentsBetweenDates(@Param("startDate") LocalDateTime startDate,
+                                             @Param("endDate") LocalDateTime endDate);
+
+    @Query(value = "SELECT COUNT(m) FROM StudentVisit v JOIN v.medications m WHERE v.visitDate BETWEEN :startDate AND :endDate")
+    Object[] countMedicationsAdministeredBetweenDates(@Param("startDate") LocalDateTime startDate,
+                                                      @Param("endDate") LocalDateTime endDate);
+
+    // Count visits between dates
+    Long countByVisitDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    // FIXED: Changed from countByVisitDateBetweenAndIsEmergencyTrue to countByVisitDateBetweenAndEmergencyFlagTrue
+    Long countByVisitDateBetweenAndEmergencyFlagTrue(LocalDateTime startDate, LocalDateTime endDate);
+
+    // Count visits with specific health issue
+    @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate " +
+            "AND (LOWER(v.reason) LIKE LOWER(CONCAT('%', :healthIssue, '%')) " +
+            "OR LOWER(v.symptoms) LIKE LOWER(CONCAT('%', :healthIssue, '%')) " +
+            "OR LOWER(v.observations) LIKE LOWER(CONCAT('%', :healthIssue, '%')))")
+    Long countByVisitDateBetweenAndHealthIssueContaining(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("healthIssue") String healthIssue);
+
+    // Get visit summary by type (combined query)
+    @Query("SELECT 'Routine checks' as visitType, COUNT(v) as visitCount FROM StudentVisit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate AND v.emergencyFlag = false " +
+            "UNION ALL " +
+            "SELECT 'Emergencies', COUNT(v) FROM StudentVisit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate AND v.emergencyFlag = true " +
+            "UNION ALL " +
+            "SELECT 'Injuries', COUNT(v) FROM StudentVisit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate " +
+            "AND (LOWER(v.reason) LIKE '%injury%' OR LOWER(v.reason) LIKE '%injured%') " +
+            "UNION ALL " +
+            "SELECT 'Illness', COUNT(v) FROM StudentVisit v " +
+            "WHERE v.visitDate BETWEEN :startDate AND :endDate " +
+            "AND (LOWER(v.reason) LIKE '%fever%' OR LOWER(v.reason) LIKE '%cold%' " +
+            "OR LOWER(v.reason) LIKE '%flu%' OR LOWER(v.reason) LIKE '%headache%')")
+    List<Object[]> getVisitSummaryByType(
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+
+    // Get unique student count
+
+
+    // For change percentage calculations - get count for previous period
+    @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate")
+    Long countVisitsInPeriod(@Param("startDate") LocalDateTime startDate,
+                             @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate AND v.emergencyFlag = true")
+    Long countEmergencyVisitsInPeriod(@Param("startDate") LocalDateTime startDate,
+                                      @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate AND v.disposition = 'SENT_HOME'")
+    Long countSentHomeInPeriod(@Param("startDate") LocalDateTime startDate,
+                               @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate AND v.disposition = 'RETURNED_TO_CLASS'")
+    Long countReturnedToClassInPeriod(@Param("startDate") LocalDateTime startDate,
+                                      @Param("endDate") LocalDateTime endDate);
+
+    Page<StudentVisit> findAll(Specification<StudentVisit> spec, Pageable pageable);
 }

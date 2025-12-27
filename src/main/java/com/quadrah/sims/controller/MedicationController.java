@@ -1,14 +1,19 @@
 package com.quadrah.sims.controller;
 
+import com.quadrah.sims.dto.MedicationDTO;
 import com.quadrah.sims.model.MedicationAdministration;
 import com.quadrah.sims.model.MedicationInventory;
 import com.quadrah.sims.service.MedicationService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,10 +27,22 @@ public class MedicationController {
         this.medicationService = medicationService;
     }
 
-    // Medication Inventory Endpoints
+    // Medication Inventory Endpoints with filtering
     @GetMapping("/inventory")
-    public ResponseEntity<List<MedicationInventory>> getAllMedications() {
-        List<MedicationInventory> medications = medicationService.getAllMedications();
+    public ResponseEntity<Page<MedicationDTO>> getMedications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryDateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryDateTo,
+            @RequestParam(required = false) Boolean isActive) {
+
+        Page<MedicationDTO> medications = medicationService.getMedicationsWithFilters(
+                PageRequest.of(page, size, Sort.by("medicationName")),
+                search, status, category, expiryDateFrom, expiryDateTo, isActive
+        );
         return ResponseEntity.ok(medications);
     }
 
@@ -68,6 +85,14 @@ public class MedicationController {
             @RequestParam Integer quantityChange,
             @RequestParam(defaultValue = "Manual adjustment") String reason) {
         MedicationInventory updatedMedication = medicationService.updateStock(id, quantityChange, reason);
+        return ResponseEntity.ok(updatedMedication);
+    }
+
+    @PostMapping("/inventory/{id}/restock")
+    public ResponseEntity<MedicationInventory> restockMedication(
+            @PathVariable Long id,
+            @RequestParam Integer quantity) {
+        MedicationInventory updatedMedication = medicationService.updateStock(id, quantity, "Restock");
         return ResponseEntity.ok(updatedMedication);
     }
 

@@ -1,5 +1,6 @@
 package com.quadrah.sims.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -12,10 +13,12 @@ public class MedicationAdministration {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "visit_id", nullable = false)
+    @JsonBackReference("visit-medications")  // CHANGE FROM @JsonIgnore TO THIS
     private StudentVisit studentVisit;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "medication_id")
+    @JsonBackReference("medication-administrations")  // ADD THIS
     private MedicationInventory medication;
 
     @Column(name = "medication_name", nullable = false)

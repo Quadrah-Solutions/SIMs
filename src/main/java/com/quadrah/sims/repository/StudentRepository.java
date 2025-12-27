@@ -2,7 +2,11 @@ package com.quadrah.sims.repository;
 
 
 import com.quadrah.sims.model.Student;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StudentRepository extends JpaRepository<Student, Long> {
+public interface StudentRepository extends JpaRepository<Student, Long>, JpaSpecificationExecutor<Student> {
 
     // Find student by student ID (unique identifier)
     Optional<Student> findByStudentId(String studentId);
@@ -34,4 +38,9 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     // Find all students ordered by last name, first name
     List<Student> findAllByOrderByLastNameAscFirstNameAsc();
+
+    @Query(value = "SELECT s.gradeLevel, s.firstName, s.lastName FROM Student s WHERE s.allergies IS NULL OR s.allergies IS EMPTY")
+    List<Object[]> findStudentsWithoutAllergies();
+
+    Page<Student> findAll(Specification<Student> spec, Pageable pageable);
 }

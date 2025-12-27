@@ -1,6 +1,9 @@
 package com.quadrah.sims.repository;
 
 import com.quadrah.sims.model.MedicationInventory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,4 +39,8 @@ public interface MedicationInventoryRepository extends JpaRepository<MedicationI
 
     // Check if medication name exists (for validation)
     boolean existsByMedicationName(String medicationName);
+
+    Page<MedicationInventory> findAll(Specification<MedicationInventory> spec, Pageable pageable);
+
+//    List<String> findAllCategories();
 }

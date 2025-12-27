@@ -22,14 +22,14 @@ public class MedicalHistoryController {
     }
 
     @GetMapping("/student/{studentId}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<List<MedicalHistory>> getMedicalHistoryByStudent(@PathVariable Long studentId) {
         List<MedicalHistory> medicalHistory = medicalHistoryService.getMedicalHistoryByStudent(studentId);
         return ResponseEntity.ok(medicalHistory);
     }
 
     @PostMapping("/student/{studentId}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<MedicalHistory> createMedicalHistory(
             @PathVariable Long studentId,
             @Valid @RequestBody MedicalHistory medicalHistory) {
@@ -38,7 +38,7 @@ public class MedicalHistoryController {
     }
 
     @PutMapping("/{medicalHistoryId}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<MedicalHistory> updateMedicalHistory(
             @PathVariable Long medicalHistoryId,
             @Valid @RequestBody MedicalHistory medicalHistoryDetails) {
@@ -47,14 +47,14 @@ public class MedicalHistoryController {
     }
 
     @DeleteMapping("/{medicalHistoryId}")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateMedicalHistory(@PathVariable Long medicalHistoryId) {
         medicalHistoryService.deactivateMedicalHistory(medicalHistoryId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/check")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<Boolean> checkStudentHasCondition(
             @RequestParam Long studentId,
             @RequestParam String conditionName) {
@@ -63,7 +63,7 @@ public class MedicalHistoryController {
     }
 
     @GetMapping("/students-with-condition")
-    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<List<Student>> getStudentsWithCondition(@RequestParam String conditionName) {
         List<Student> students = medicalHistoryService.getStudentsWithCondition(conditionName);
         return ResponseEntity.ok(students);

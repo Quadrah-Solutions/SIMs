@@ -74,6 +74,12 @@
 			<optional>true</optional>
 		</dependency>
 
+		<dependency>
+			<groupId>org.modelmapper</groupId>
+			<artifactId>modelmapper</artifactId>
+			<version>3.1.1</version>
+		</dependency>
+
 		<!-- Keycloak Dependencies -->
 		<dependency>
 			<groupId>org.keycloak</groupId>

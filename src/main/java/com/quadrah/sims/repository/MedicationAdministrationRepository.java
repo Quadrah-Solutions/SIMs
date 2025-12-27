@@ -32,4 +32,23 @@ public interface MedicationAdministrationRepository extends JpaRepository<Medica
 
     // Find recent medication administrations
     List<MedicationAdministration> findTop10ByOrderByAdministrationTimeDesc();
+
+    @Query(value = "SELECT m.medicationName, COUNT(m) as usageCount FROM MedicationAdministration m " +
+            "WHERE m.administrationTime BETWEEN :startDate AND :endDate " +
+            "GROUP BY m.medicationName ORDER BY usageCount DESC")
+    List<Object[]> findMedicationUsageByDateRange(@Param("startDate") LocalDateTime startDate,
+                                                  @Param("endDate") LocalDateTime endDate);
+
+    // Add for compliance issues (expired medications)
+    @Query(value = "SELECT m.medicationName, m.expiryDate FROM MedicationInventory m WHERE m.expiryDate < CURRENT_DATE")
+    List<Object[]> findExpiredMedications();
+
+    // FIXED: Changed from countByAdministeredAtBetween to countByAdministrationTimeBetween
+    Long countByAdministrationTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
+
+    // Count medications for change percentage calculation
+    @Query("SELECT COUNT(ma) FROM MedicationAdministration ma " +
+            "WHERE ma.administrationTime BETWEEN :startDate AND :endDate")
+    Long countMedicationsInPeriod(@Param("startDate") LocalDateTime startDate,
+                                  @Param("endDate") LocalDateTime endDate);
 }

@@ -1,18 +1,80 @@
 package com.quadrah.sims.service;
 
+import com.quadrah.sims.dto.StudentDTO;
+import com.quadrah.sims.exception.ResourceNotFoundException;
+import com.quadrah.sims.model.Allergy;
+import com.quadrah.sims.model.EmergencyContact;
 import com.quadrah.sims.model.Student;
 import com.quadrah.sims.repository.StudentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class StudentService {
 
     private final StudentRepository studentRepository;
+
+    // Add this method for filtering with pagination
+    public Page<StudentDTO> getStudentsWithFilters(
+            Pageable pageable,
+            String search,
+            String grade,
+            String className) {
+
+        Specification<Student> spec = Specification.where(null);
+
+        // Search filter (search in firstName, lastName, studentId)
+        if (search != null && !search.isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.or(
+                            cb.like(cb.lower(root.get("firstName")), "%" + search.toLowerCase() + "%"),
+                            cb.like(cb.lower(root.get("lastName")), "%" + search.toLowerCase() + "%"),
+                            cb.like(cb.lower(root.get("studentId")), "%" + search.toLowerCase() + "%")
+                    )
+            );
+        }
+
+        // Grade filter
+        if (grade != null && !grade.isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("gradeLevel"), grade)
+            );
+        }
+
+        // Class filter (using homeroom)
+        if (className != null && !className.isEmpty()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("homeroom"), className)
+            );
+        }
+
+        // Apply pagination and sorting
+        Page<Student> studentsPage = studentRepository.findAll(spec, pageable);
+
+        // Convert to DTOs
+        List<StudentDTO> studentDTOs = studentsPage.getContent().stream()
+                .map(StudentDTO::new)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(studentDTOs, pageable, studentsPage.getTotalElements());
+    }
+
+    public List<StudentDTO> getAllStudentsDTO() {
+        return studentRepository.findAll().stream()
+                .map(StudentDTO::new)
+                .collect(Collectors.toList());
+    }
+
+
 
     public StudentService(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;
@@ -53,6 +115,26 @@ public class StudentService {
             throw new IllegalArgumentException("Student with ID " + student.getStudentId() + " already exists.");
         }
 
+        // Set student reference on each emergency contact
+        if (student.getEmergencyContacts() != null) {
+            for (EmergencyContact contact : student.getEmergencyContacts()) {
+                contact.setStudent(student); // Set the bidirectional relationship
+
+                // If isPrimary is null, set default to false
+                if (contact.getIsPrimary() == null) {
+                    contact.setIsPrimary(false);
+                }
+            }
+        }
+
+        // Set student reference on each allergy
+        if (student.getAllergies() != null) {
+            for (Allergy allergy : student.getAllergies()) {
+                allergy.setStudent(student); // Set the bidirectional relationship
+            }
+        }
+
+        // CascadeType.ALL should handle saving the related entities
         return studentRepository.save(student);
     }
 

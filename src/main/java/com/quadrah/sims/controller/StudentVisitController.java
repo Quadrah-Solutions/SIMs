@@ -1,5 +1,6 @@
 package com.quadrah.sims.controller;
 
+import com.quadrah.sims.dto.VisitDTO;
 import com.quadrah.sims.model.StudentVisit;
 import com.quadrah.sims.service.StudentVisitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,11 +9,16 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,9 +43,24 @@ public class StudentVisitController {
             @ApiResponse(responseCode = "401", description = "Unauthorized - valid JWT token required"),
             @ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions")
     })
-    @GetMapping
-    public ResponseEntity<List<StudentVisit>> getAllVisits() {
-        List<StudentVisit> visits = visitService.getAllVisits();
+    @GetMapping()
+    @PreAuthorize("hasAnyRole('NURSE', 'ADMIN')")
+    public ResponseEntity<Page<VisitDTO>> getVisits(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String studentName,
+            @RequestParam(required = false) String grade,
+            @RequestParam(required = false) String className,
+            @RequestParam(required = false) String condition,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            @RequestParam(required = false) Boolean emergencyFlag) {
+
+        Page<VisitDTO> visits = visitService.getVisitsWithFilters(
+                PageRequest.of(page, size, Sort.by("visitDate").descending()),
+                search, studentName, grade, className, condition, dateFrom, dateTo, emergencyFlag
+        );
         return ResponseEntity.ok(visits);
     }
 

@@ -1,5 +1,8 @@
 package com.quadrah.sims.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,10 +17,12 @@ public class StudentVisit {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonBackReference("student-visits")
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nurse_id", nullable = false)
+    @JsonBackReference("nurse-visits")
     private UserAccount nurse;
 
     @Column(name = "visit_date", nullable = false)
@@ -51,10 +56,12 @@ public class StudentVisit {
     @Column(name = "referred_by")
     private String referredBy; // Teacher name or "Self"
 
-    @OneToMany(mappedBy = "studentVisit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "studentVisit", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("visit-medications")
     private List<MedicationAdministration> medications = new ArrayList<>();
 
-    @OneToMany(mappedBy = "studentVisit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "studentVisit", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference("visit-treatments")
     private List<VisitTreatment> treatments = new ArrayList<>();
 
     public enum DispositionType {

@@ -1,5 +1,7 @@
 package com.quadrah.sims.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -11,6 +13,7 @@ public class EmergencyContact {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonBackReference("student-emergencyContacts")
     private Student student;
 
     @Column(name = "contact_name", nullable = false)
