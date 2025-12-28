@@ -25,7 +25,7 @@ public class UserAccountController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')") // Only admins can list all users
+//    @PreAuthorize("hasRole('ADMIN')") // Only admins can list all users
     public ResponseEntity<List<UserAccount>> getAllUsers() {
         List<UserAccount> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
