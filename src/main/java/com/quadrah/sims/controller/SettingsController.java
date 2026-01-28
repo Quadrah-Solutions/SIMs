@@ -21,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.BufferedReader;
 
 @RestController
-@RequestMapping("/api/settings")
+@RequestMapping("/settings")
 @Tag(name = "Settings Management", description = "APIs for managing system settings")
 @SecurityRequirement(name = "bearerAuth")
 public class SettingsController {

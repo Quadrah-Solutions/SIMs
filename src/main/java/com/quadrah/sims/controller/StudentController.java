@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/students")
+@RequestMapping("/students")
 @Tag(name = "Student Management", description = "APIs for managing student records and health information")
 @SecurityRequirement(name = "bearerAuth")
 public class StudentController {

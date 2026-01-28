@@ -3,12 +3,16 @@ package com.quadrah.sims.service;
 import com.quadrah.sims.model.UserAccount;
 import com.quadrah.sims.repository.UserAccountRepository;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Transactional
@@ -16,6 +20,9 @@ public class UserAccountService {
 
     private final UserAccountRepository userAccountRepository;
     private final KeycloakService keycloakService;
+
+    private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
+
 
     public UserAccountService(UserAccountRepository userAccountRepository, @Lazy KeycloakService keycloakService) {
         this.userAccountRepository = userAccountRepository;
@@ -105,33 +112,71 @@ public class UserAccountService {
         return userAccountRepository.save(user);
     }
 
-    public UserAccount createOrUpdateUserFromKeycloak(String keycloakId, String username, String email,
-                                                      String firstName, String lastName, UserAccount.UserRole role) {
-        Optional<UserAccount> existingUser = userAccountRepository.findByKeycloakId(keycloakId);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public UserAccount createOrUpdateUserFromKeycloak(
+            String keycloakId,
+            String username,
+            String email,
+            String firstName,
+            String lastName,
+            UserAccount.UserRole role) {
 
-        if (existingUser.isPresent()) {
-            // Update existing user
-            UserAccount user = existingUser.get();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setRole(role);
-            user.setLastLogin(LocalDateTime.now());
-            return userAccountRepository.save(user);
-        } else {
-            // Create new user
-            UserAccount newUser = new UserAccount();
-            newUser.setKeycloakId(keycloakId);
-            newUser.setUsername(username);
-            newUser.setEmail(email);
-            newUser.setFirstName(firstName);
-            newUser.setLastName(lastName);
-            newUser.setRole(role);
-            newUser.setIsActive(true);
-            newUser.setLastLogin(LocalDateTime.now());
-            newUser.setCreatedAt(LocalDateTime.now());
-            return userAccountRepository.save(newUser);
+        try {
+            // Try to find existing user first
+            Optional<UserAccount> existingUserOpt = userAccountRepository.findByKeycloakId(keycloakId);
+
+            if (existingUserOpt.isPresent()) {
+                // Update existing user
+                UserAccount user = existingUserOpt.get();
+                System.out.println("Updating existing user: " + user.getUsername());
+
+                user.setEmail(email);
+                user.setFirstName(firstName);
+                user.setLastName(lastName);
+                user.setRole(role);
+                user.setLastLogin(LocalDateTime.now());
+
+                return userAccountRepository.save(user);
+            } else {
+                // Create new user
+                System.out.println("Creating new user with Keycloak ID: " + keycloakId);
+
+                UserAccount newUser = new UserAccount();
+                newUser.setKeycloakId(keycloakId);
+                newUser.setUsername(username != null ? username : keycloakId);
+                newUser.setEmail(email != null ? email : "");
+                newUser.setFirstName(firstName != null ? firstName : "Unknown");
+                newUser.setLastName(lastName != null ? lastName : "User");
+                newUser.setRole(role != null ? role : UserAccount.UserRole.TEACHER);
+                newUser.setIsActive(true);
+                newUser.setCreatedAt(LocalDateTime.now());
+                newUser.setLastLogin(LocalDateTime.now());
+
+                return userAccountRepository.save(newUser);
+            }
+
+        } catch (DataIntegrityViolationException e) {
+            // Handle duplicate key errors
+            System.err.println("Data integrity violation for user: " + keycloakId);
+            System.err.println("Error: " + e.getMessage());
+
+            // Try to fetch the existing user and update it
+            return userAccountRepository.findByKeycloakId(keycloakId)
+                    .map(user -> {
+                        user.setEmail(email);
+                        user.setFirstName(firstName);
+                        user.setLastName(lastName);
+                        user.setRole(role);
+                        user.setLastLogin(LocalDateTime.now());
+                        return userAccountRepository.save(user);
+                    })
+                    .orElseThrow(() -> new RuntimeException("Failed to sync user: " + e.getMessage(), e));
+
+        } catch (Exception e) {
+            System.err.println("Error syncing user with Keycloak ID: " + keycloakId);
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to sync user: " + e.getMessage(), e);
         }
     }
 

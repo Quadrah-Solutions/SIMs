@@ -1,0 +1,117 @@
+{
+  "realm": "SIMs",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Administrator role"
+      },
+      {
+        "name": "NURSE",
+        "description": "Nurse role"
+      },
+      {
+        "name": "TEACHER",
+        "description": "Teacher role"
+      },
+      {
+        "name": "USER",
+        "description": "Default user role"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "sims_frontend",
+      "name": "SIMs Frontend",
+      "description": "SIMs React Frontend Application",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*",
+        "http://localhost/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5173/*,http://localhost:3000/*,http://localhost/*"
+      }
+    },
+    {
+      "clientId": "sims_backend",
+      "name": "SIMs Backend",
+      "description": "SIMs Spring Boot Backend",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "secret": "KLWMJamDuQotR2JVs88cGfLA1OrlBjel"
+    },
+    {
+      "clientId": "admin-cli",
+      "name": "Admin CLI",
+      "description": "Keycloak Admin CLI",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@school.edu",
+      "firstName": "System",
+      "lastName": "Administrator",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users"
+        ]
+      }
+    }
+  ]
+}

@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/medications")
+@RequestMapping("/medications")
 public class MedicationController {
 
     private final MedicationService medicationService;

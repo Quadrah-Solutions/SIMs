@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("/notifications")
 public class NotificationController {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationController.class);

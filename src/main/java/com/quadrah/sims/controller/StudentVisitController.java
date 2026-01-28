@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/visits")
+@RequestMapping("/visits")
 @Tag(name = "Student Visit Management", description = "APIs for managing student visit records and health information")
 @SecurityRequirement(name = "bearerAuth")
 public class StudentVisitController {

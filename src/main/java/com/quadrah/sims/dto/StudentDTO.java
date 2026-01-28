@@ -2,7 +2,6 @@ package com.quadrah.sims.dto;
 
 import com.quadrah.sims.model.Allergy;
 import com.quadrah.sims.model.Student;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +16,7 @@ public class StudentDTO {
     private String homeroom;
     private LocalDate dateOfBirth;
     private String gender;
+    private String boardingStatus; // New field
     private String allergies;
 
     // Constructor
@@ -30,6 +30,7 @@ public class StudentDTO {
         this.homeroom = student.getHomeroom();
         this.dateOfBirth = student.getDateOfBirth();
         this.gender = student.getGender();
+        this.boardingStatus = student.getBoardingStatus();
 
         // Format allergies
         if (student.getAllergies() != null && !student.getAllergies().isEmpty()) {
@@ -68,6 +69,9 @@ public class StudentDTO {
 
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
+
+    public String getBoardingStatus() { return boardingStatus; }
+    public void setBoardingStatus(String boardingStatus) { this.boardingStatus = boardingStatus; }
 
     public String getAllergies() { return allergies; }
     public void setAllergies(String allergies) { this.allergies = allergies; }

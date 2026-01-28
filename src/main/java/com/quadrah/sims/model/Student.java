@@ -35,6 +35,9 @@ public class Student {
     @Column(name = "gender")
     private String gender;
 
+    @Column(name = "boarding_status")
+    private String boardingStatus; // "BOARDING" or "DAY"
+
     @Column(name = "special_notes", length = 1000)
     private String specialNotes;
 
@@ -63,39 +66,80 @@ public class Student {
     @JoinColumn(name = "classroom_id")
     private ClassRoom classRoom;
 
+    // Constants for boarding status
+    public static final String BOARDING = "BOARDING";
+    public static final String DAY = "DAY";
+
+    public Student() {
+        // Default to DAY student if not specified
+        this.boardingStatus = DAY;
+    }
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getStudentId() { return studentId; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getGradeLevel() { return gradeLevel; }
+    public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
+
+    public String getHomeroom() { return homeroom; }
+    public void setHomeroom(String homeroom) { this.homeroom = homeroom; }
+
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getBoardingStatus() { return boardingStatus; }
+    public void setBoardingStatus(String boardingStatus) {
+        // Validate boarding status
+        if (boardingStatus != null &&
+                (boardingStatus.equalsIgnoreCase(BOARDING) ||
+                        boardingStatus.equalsIgnoreCase(DAY))) {
+            this.boardingStatus = boardingStatus.toUpperCase();
+        } else {
+            this.boardingStatus = BOARDING; // Default to BOARDING
+        }
+    }
+
+    public String getSpecialNotes() { return specialNotes; }
+    public void setSpecialNotes(String specialNotes) { this.specialNotes = specialNotes; }
+
+    public List<StudentVisit> getVisits() { return visits; }
+    public void setVisits(List<StudentVisit> visits) { this.visits = visits; }
+
+    public List<Allergy> getAllergies() { return allergies; }
+    public void setAllergies(List<Allergy> allergies) { this.allergies = allergies; }
+
+    public List<MedicalHistory> getMedicalHistories() { return medicalHistories; }
+    public void setMedicalHistories(List<MedicalHistory> medicalHistories) { this.medicalHistories = medicalHistories; }
+
+    public List<EmergencyContact> getEmergencyContacts() { return emergencyContacts; }
+    public void setEmergencyContacts(List<EmergencyContact> emergencyContacts) { this.emergencyContacts = emergencyContacts; }
+
     public Grade getGrade() { return grade; }
     public void setGrade(Grade grade) { this.grade = grade; }
 
     public ClassRoom getClassRoom() { return classRoom; }
     public void setClassRoom(ClassRoom classRoom) { this.classRoom = classRoom; }
 
+    // Helper method to check if student is boarding
+    public boolean isBoarding() {
+        return BOARDING.equalsIgnoreCase(this.boardingStatus);
+    }
 
-    public Student() {}
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getStudentId() { return studentId; }
-    public void setStudentId(String studentId) { this.studentId = studentId; }
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-    public String getGradeLevel() { return gradeLevel; }
-    public void setGradeLevel(String gradeLevel) { this.gradeLevel = gradeLevel; }
-    public String getHomeroom() { return homeroom; }
-    public void setHomeroom(String homeroom) { this.homeroom = homeroom; }
-    public LocalDate getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-    public String getSpecialNotes() { return specialNotes; }
-    public void setSpecialNotes(String specialNotes) { this.specialNotes = specialNotes; }
-    public List<StudentVisit> getVisits() { return visits; }
-    public void setVisits(List<StudentVisit> visits) { this.visits = visits; }
-    public List<Allergy> getAllergies() { return allergies; }
-    public void setAllergies(List<Allergy> allergies) { this.allergies = allergies; }
-    public List<MedicalHistory> getMedicalHistories() { return medicalHistories; }
-    public void setMedicalHistories(List<MedicalHistory> medicalHistories) { this.medicalHistories = medicalHistories; }
-    public List<EmergencyContact> getEmergencyContacts() { return emergencyContacts; }
-    public void setEmergencyContacts(List<EmergencyContact> emergencyContacts) { this.emergencyContacts = emergencyContacts; }
+    // Helper method to check if student is day student
+    public boolean isDayStudent() {
+        return DAY.equalsIgnoreCase(this.boardingStatus);
+    }
 }

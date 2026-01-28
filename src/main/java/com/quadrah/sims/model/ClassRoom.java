@@ -1,5 +1,6 @@
 package com.quadrah.sims.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +23,11 @@ public class ClassRoom {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_id")
+    @JsonIgnore
     private Grade grade;
 
     @OneToMany(mappedBy = "classRoom", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Student> students = new ArrayList<>();
 
     public ClassRoom() {}

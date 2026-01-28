@@ -29,9 +29,14 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
     @Override
     public AbstractAuthenticationToken convert(Jwt jwt) {
         // Sync user to database first
-        syncUserToDatabase(jwt);
+//        syncUserToDatabase(jwt);
+        try {
+            syncUserToDatabase(jwt);
+        } catch (Exception e) {
+//            log.error("User sync failed but authentication continues", e);
+        }
 
-        // Extract authorities from JWT
+    // Extract authorities from JWT
         Collection<GrantedAuthority> authorities = extractAuthorities(jwt);
 
         // Create and return the authentication token
@@ -138,10 +143,17 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
     private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
         Set<GrantedAuthority> authorities = new HashSet<>();
 
+        // DEBUG: Print all claims
+        System.out.println("JWT Claims:");
+        jwt.getClaims().forEach((key, value) -> System.out.println(key + ": " + value));
+
         // Extract realm roles
         Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+        System.out.println("Realm access: " + realmAccess);
+
         if (realmAccess != null) {
             List<String> roles = (List<String>) realmAccess.get("roles");
+            System.out.println("Realm roles: " + roles);
             if (roles != null) {
                 roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())));
             }
@@ -149,16 +161,29 @@ public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, Abstra
 
         // Extract client-specific roles
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+        System.out.println("Resource access: " + resourceAccess);
+
         if (resourceAccess != null) {
-            Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get("school-infirmary-client");
-            if (clientAccess != null) {
+            // Print all clients
+            for (String clientId : resourceAccess.keySet()) {
+                System.out.println("Client: " + clientId);
+                Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get(clientId);
+                System.out.println("Client access for " + clientId + ": " + clientAccess);
+
+                if ("account".equals(clientId)) {
+                    continue;
+                }
+
                 List<String> roles = (List<String>) clientAccess.get("roles");
+                System.out.println("Client roles for " + clientId + ": " + roles);
+
                 if (roles != null) {
                     roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())));
                 }
             }
         }
 
+        System.out.println("Final authorities: " + authorities);
         return authorities;
     }
 }
