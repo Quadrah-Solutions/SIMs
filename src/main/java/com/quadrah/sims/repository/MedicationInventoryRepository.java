@@ -20,12 +20,12 @@ public interface MedicationInventoryRepository extends JpaRepository<MedicationI
     Optional<MedicationInventory> findByMedicationName(String medicationName);
 
     // Find medications with low stock (current stock <= minimum stock)
-    @Query("SELECT m FROM MedicationInventory m WHERE m.currentStock <= m.minimumStock AND m.isActive = true")
+    @Query("SELECT m FROM MedicationInventory m WHERE m.currentStock < m.minimumStock AND m.isActive = true")
     List<MedicationInventory> findLowStockMedications();
 
     // Find medications that are expired or expiring soon
-    @Query("SELECT m FROM MedicationInventory m WHERE m.expiryDate <= :expiryThreshold AND m.isActive = true ORDER BY m.expiryDate ASC")
-    List<MedicationInventory> findExpiringMedications(@Param("expiryThreshold") LocalDate expiryThreshold);
+    @Query("SELECT m FROM MedicationInventory m WHERE m.expiryDate <= :expiryDate AND m.isActive = true ORDER BY m.expiryDate ASC")
+    List<MedicationInventory> findExpiringMedications(@Param("expiryDate") LocalDate expiryDate);
 
     // Find active medications
     List<MedicationInventory> findByIsActiveTrue();

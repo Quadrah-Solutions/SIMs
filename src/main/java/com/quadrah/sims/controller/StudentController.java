@@ -1,5 +1,7 @@
 package com.quadrah.sims.controller;
 
+import com.quadrah.sims.dto.BulkUploadError;
+import com.quadrah.sims.dto.BulkUploadResponse;
 import com.quadrah.sims.dto.StudentDTO;
 import com.quadrah.sims.model.Student;
 import com.quadrah.sims.service.StudentService;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -91,6 +94,40 @@ public class StudentController {
     public ResponseEntity<Student> createStudent(@Valid @RequestBody Student student) {
         Student createdStudent = studentService.createStudent(student);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdStudent);
+    }
+
+    @PostMapping("/bulk-upload")
+    @Operation(summary = "Bulk upload students from file",
+            description = "Upload a CSV or Excel file with student data")
+    public ResponseEntity<BulkUploadResponse> bulkUploadStudents(
+            @RequestParam("file") MultipartFile file) {
+
+        try {
+            BulkUploadResponse response = studentService.processBulkUpload(file);
+
+            if (response.getSuccessfulCount() > 0) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+
+        } catch (Exception e) {
+            // Log the error
+            System.err.println("Error in bulk upload: " + e.getMessage());
+            e.printStackTrace();
+
+            // Return a more detailed error response
+            BulkUploadError error = new BulkUploadError(0, "Unknown", "System", e.getMessage());
+            List<BulkUploadError> errors = List.of(error);
+            BulkUploadResponse errorResponse = new BulkUploadResponse(
+                    "Failed to process file: " + e.getMessage(),
+                    0,
+                    errors.size(),
+                    errors
+            );
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 
     @PutMapping("/{id}")

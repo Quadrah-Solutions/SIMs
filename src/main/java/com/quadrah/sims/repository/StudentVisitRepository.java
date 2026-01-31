@@ -77,6 +77,9 @@ public interface StudentVisitRepository extends JpaRepository<StudentVisit, Long
     @Query("SELECT v FROM StudentVisit v WHERE v.visitDate >= :date ORDER BY v.visitDate DESC")
     List<StudentVisit> findRecentVisits(@Param("date") LocalDateTime date);
 
+    @Query("SELECT v FROM StudentVisit v WHERE v.emergencyFlag = true AND v.visitDate >= :date")
+    List<StudentVisit> findCriticalCases(@Param("date") LocalDateTime date);
+
 
     @Query(value = "SELECT COUNT(DISTINCT s.id) FROM StudentVisit v JOIN v.student s WHERE v.visitDate BETWEEN :startDate AND :endDate")
     Object[] countUniqueStudentsBetweenDates(@Param("startDate") LocalDateTime startDate,
@@ -91,6 +94,9 @@ public interface StudentVisitRepository extends JpaRepository<StudentVisit, Long
 
     // FIXED: Changed from countByVisitDateBetweenAndIsEmergencyTrue to countByVisitDateBetweenAndEmergencyFlagTrue
     Long countByVisitDateBetweenAndEmergencyFlagTrue(LocalDateTime startDate, LocalDateTime endDate);
+
+    List<StudentVisit> findByVisitDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+
 
     // Count visits with specific health issue
     @Query("SELECT COUNT(v) FROM StudentVisit v WHERE v.visitDate BETWEEN :startDate AND :endDate " +

@@ -19,11 +19,11 @@ public class KeycloakAdminConfig {
     @Value("${keycloak.realm}")
     private String realm;
 
-    @Value("${keycloak.admin.client-id}")  // Changed
-    private String adminClientId;          // Changed
+    @Value("${keycloak.admin.client-id}")
+    private String adminClientId;
 
-    @Value("${keycloak.admin.client-secret}")  // Changed
-    private String adminClientSecret;          // Changed
+    @Value("${keycloak.admin.client-secret}")
+    private String adminClientSecret;
 
     @Value("${keycloak.admin.username}")
     private String adminUsername;

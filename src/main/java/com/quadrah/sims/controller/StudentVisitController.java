@@ -2,6 +2,8 @@ package com.quadrah.sims.controller;
 
 import com.quadrah.sims.dto.VisitDTO;
 import com.quadrah.sims.model.StudentVisit;
+import com.quadrah.sims.model.UserAccount;
+import com.quadrah.sims.repository.UserAccountRepository;
 import com.quadrah.sims.service.StudentVisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,6 +18,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,8 +34,11 @@ public class StudentVisitController {
 
     private final StudentVisitService visitService;
 
-    public StudentVisitController(StudentVisitService visitService) {
+    private final UserAccountRepository userAccountRepository;
+
+    public StudentVisitController(StudentVisitService visitService, UserAccountRepository userAccountRepository) {
         this.visitService = visitService;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Operation(
@@ -110,6 +117,23 @@ public class StudentVisitController {
 
     @PostMapping
     public ResponseEntity<StudentVisit> createVisit(@Valid @RequestBody StudentVisit visit) {
+        // Get current authenticated user's Keycloak ID
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String keycloakId = authentication.getName(); // This is the Keycloak subject ID
+
+        // Find the user by Keycloak ID
+        UserAccount currentUser = userAccountRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with Keycloak ID: " + keycloakId));
+
+        // Check if user has nurse role
+        if (currentUser.getRole() != UserAccount.UserRole.NURSE &&
+                currentUser.getRole() != UserAccount.UserRole.ADMIN) {
+            throw new IllegalArgumentException("User is not authorized to create visits.");
+        }
+
+        // Set the nurse
+        visit.setNurse(currentUser);
+
         StudentVisit createdVisit = visitService.createVisit(visit);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdVisit);
     }

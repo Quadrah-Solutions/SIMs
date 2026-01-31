@@ -252,13 +252,23 @@ public class StudentService {
 
             for (int i = 0; i < records.size(); i++) {
                 CSVRecord record = records.get(i);
-                int rowNumber = i + 2; // +2 because header is row 1 and we're 0-indexed
+                final int rowNumber = i + 2; // Make it final
 
                 try {
                     Student student = createStudentFromCSVRecord(record);
 
-                    // Validate student
+                    // Validate student - this adds errors if any
                     validateStudent(student, rowNumber, errors);
+
+                    // Check if there are any errors for this row
+                    final int currentRowNumber = rowNumber; // Create final copy for lambda
+                    boolean hasValidationErrors = errors.stream()
+                            .anyMatch(error -> error.getRowNumber() == currentRowNumber);
+
+                    if (hasValidationErrors) {
+                        // Skip saving this student due to validation errors
+                        continue;
+                    }
 
                     // Check for duplicate student ID
                     if (studentRepository.existsByStudentId(student.getStudentId())) {
@@ -274,7 +284,7 @@ public class StudentService {
                 } catch (Exception e) {
                     errors.add(new BulkUploadError(rowNumber,
                             record.isSet("Student ID") ? record.get("Student ID") : "Unknown",
-                            "General", e.getMessage()));
+                            "General", "Error: " + e.getMessage()));
                 }
             }
 
@@ -301,20 +311,30 @@ public class StudentService {
                 rowIterator.next();
             }
 
-            int rowNumber = 2; // Starting from row 2 (row 1 is header)
+            int rowNumber = 2;
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
+                final int currentRowNumber = rowNumber; // Create final copy
 
                 try {
                     Student student = createStudentFromExcelRow(row);
 
                     // Validate student
-                    validateStudent(student, rowNumber, errors);
+                    validateStudent(student, currentRowNumber, errors);
+
+                    // Check if there are any errors for this row
+                    boolean hasValidationErrors = errors.stream()
+                            .anyMatch(error -> error.getRowNumber() == currentRowNumber);
+
+                    if (hasValidationErrors) {
+                        rowNumber++;
+                        continue;
+                    }
 
                     // Check for duplicate student ID
                     if (studentRepository.existsByStudentId(student.getStudentId())) {
-                        errors.add(new BulkUploadError(rowNumber, student.getStudentId(),
+                        errors.add(new BulkUploadError(currentRowNumber, student.getStudentId(),
                                 "studentId", "Student ID already exists"));
                         rowNumber++;
                         continue;
@@ -325,7 +345,7 @@ public class StudentService {
                     successfulCount++;
 
                 } catch (Exception e) {
-                    errors.add(new BulkUploadError(rowNumber, "Unknown", "General", e.getMessage()));
+                    errors.add(new BulkUploadError(currentRowNumber, "Unknown", "General", "Error: " + e.getMessage()));
                 }
 
                 rowNumber++;

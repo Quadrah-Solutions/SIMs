@@ -1,5 +1,6 @@
 package com.quadrah.sims.controller;
 
+import com.quadrah.sims.dto.CreateUserRequest;
 import com.quadrah.sims.model.UserAccount;
 import com.quadrah.sims.service.KeycloakService;
 import com.quadrah.sims.service.UserAccountService;
@@ -84,16 +85,35 @@ public class UserAccountController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserAccount> createUser(@Valid @RequestBody UserAccount user) {
-        // Note: User creation should primarily happen through Keycloak
-        // This endpoint is for creating local user records after Keycloak user creation
-        try{
-            UserAccount createdUser = userService.createUser(user);
+    public ResponseEntity<UserAccount> createUser(@Valid @RequestBody CreateUserRequest request) {
+        try {
+            // 1. First create user in Keycloak
+            String keycloakUserId = keycloakService.createKeycloakUser(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getPassword(),
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getRole()
+            );
+
+            // 2. Create local user record with Keycloak ID
+            UserAccount userAccount = new UserAccount();
+            userAccount.setKeycloakId(keycloakUserId);
+            userAccount.setUsername(request.getUsername());
+            userAccount.setEmail(request.getEmail());
+            userAccount.setFirstName(request.getFirstName());
+            userAccount.setLastName(request.getLastName());
+            userAccount.setRole(request.getRole());
+
+            UserAccount createdUser = userService.createUser(userAccount);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
+
 
 
     @PostMapping("/sync-keycloak")
