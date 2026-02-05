@@ -7,7 +7,10 @@ import com.quadrah.sims.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -69,6 +72,36 @@ public class MedicalHistoryService {
 
     public List<Student> getStudentsWithCondition(String conditionName) {
         return medicalHistoryRepository.findStudentsByConditionName(conditionName);
+    }
+
+    // NEW METHOD: Get Medical History Summary Report
+    public Map<String, Object> getMedicalHistorySummary(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Map<String, Object> summary = new HashMap<>();
+
+        // Get total cases in date range
+        Long totalCases = medicalHistoryRepository.countByDiagnosisDateBetweenAndIsActiveTrue(startDate, endDate);
+        summary.put("totalCases", totalCases);
+
+        // Get most common conditions
+        List<Object[]> commonConditions = medicalHistoryRepository.findCommonConditionsByDateRange(startDate, endDate);
+        summary.put("commonConditions", commonConditions);
+
+        // Get cases by severity
+        List<Object[]> casesBySeverity = medicalHistoryRepository.countCasesBySeverityAndDateRange(startDate, endDate);
+        summary.put("casesBySeverity", casesBySeverity);
+
+        // Get new cases count (first diagnosis in this period)
+        Long newCases = medicalHistoryRepository.countNewCasesInPeriod(startDate, endDate);
+        summary.put("newCases", newCases);
+
+        // Get cases by month/week (for charting)
+        List<Object[]> casesOverTime = medicalHistoryRepository.countCasesOverTime(startDate, endDate);
+        summary.put("casesOverTime", casesOverTime);
+
+        summary.put("startDate", startDate);
+        summary.put("endDate", endDate);
+
+        return summary;
     }
 
     private void validateMedicalHistory(MedicalHistory medicalHistory) {

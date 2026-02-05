@@ -4,12 +4,15 @@ import com.quadrah.sims.model.MedicalHistory;
 import com.quadrah.sims.model.Student;
 import com.quadrah.sims.service.MedicalHistoryService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/medical-history")
@@ -22,14 +25,12 @@ public class MedicalHistoryController {
     }
 
     @GetMapping("/student/{studentId}")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<List<MedicalHistory>> getMedicalHistoryByStudent(@PathVariable Long studentId) {
         List<MedicalHistory> medicalHistory = medicalHistoryService.getMedicalHistoryByStudent(studentId);
         return ResponseEntity.ok(medicalHistory);
     }
 
     @PostMapping("/student/{studentId}")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<MedicalHistory> createMedicalHistory(
             @PathVariable Long studentId,
             @Valid @RequestBody MedicalHistory medicalHistory) {
@@ -38,7 +39,6 @@ public class MedicalHistoryController {
     }
 
     @PutMapping("/{medicalHistoryId}")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<MedicalHistory> updateMedicalHistory(
             @PathVariable Long medicalHistoryId,
             @Valid @RequestBody MedicalHistory medicalHistoryDetails) {
@@ -47,14 +47,12 @@ public class MedicalHistoryController {
     }
 
     @DeleteMapping("/{medicalHistoryId}")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<Void> deactivateMedicalHistory(@PathVariable Long medicalHistoryId) {
         medicalHistoryService.deactivateMedicalHistory(medicalHistoryId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/check")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<Boolean> checkStudentHasCondition(
             @RequestParam Long studentId,
             @RequestParam String conditionName) {
@@ -63,9 +61,23 @@ public class MedicalHistoryController {
     }
 
     @GetMapping("/students-with-condition")
-//    @PreAuthorize("hasRole('NURSE') or hasRole('ADMIN')")
     public ResponseEntity<List<Student>> getStudentsWithCondition(@RequestParam String conditionName) {
         List<Student> students = medicalHistoryService.getStudentsWithCondition(conditionName);
         return ResponseEntity.ok(students);
+    }
+
+    // NEW ENDPOINT: Medical History Summary Report
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String, Object>> getMedicalHistorySummary(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime endDate) {
+
+        // Validate date range
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be before end date");
+        }
+
+        Map<String, Object> summary = medicalHistoryService.getMedicalHistorySummary(startDate, endDate);
+        return ResponseEntity.ok(summary);
     }
 }

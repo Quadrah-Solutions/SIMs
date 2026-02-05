@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -171,6 +172,7 @@ public class StudentService {
             throw new IllegalArgumentException("Student with ID " + studentDetails.getStudentId() + " already exists.");
         }
 
+        // Update basic student information
         student.setStudentId(studentDetails.getStudentId());
         student.setFirstName(studentDetails.getFirstName());
         student.setLastName(studentDetails.getLastName());
@@ -178,9 +180,101 @@ public class StudentService {
         student.setHomeroom(studentDetails.getHomeroom());
         student.setDateOfBirth(studentDetails.getDateOfBirth());
         student.setGender(studentDetails.getGender());
+        student.setBoardingStatus(studentDetails.getBoardingStatus());
         student.setSpecialNotes(studentDetails.getSpecialNotes());
 
+        // Update allergies - clear existing and add new ones
+        updateAllergies(student, studentDetails);
+
+        // Update emergency contacts - clear existing and add new ones
+        updateEmergencyContacts(student, studentDetails);
+
         return studentRepository.save(student);
+    }
+
+    private void updateAllergies(Student student, Student studentDetails) {
+        // Clear existing allergies
+        List<Allergy> existingAllergies = student.getAllergies();
+        if (existingAllergies != null && !existingAllergies.isEmpty()) {
+            // Remove all existing allergies
+            existingAllergies.forEach(allergy -> allergy.setStudent(null));
+            student.getAllergies().clear();
+        }
+
+        // Add new allergies from studentDetails
+        if (studentDetails.getAllergies() != null) {
+            for (Allergy allergy : studentDetails.getAllergies()) {
+                // Skip "None" allergies
+                if (allergy.getAllergyType() != null &&
+                        !allergy.getAllergyType().trim().equalsIgnoreCase("none") &&
+                        !allergy.getAllergyType().trim().isEmpty()) {
+
+                    // Set the student reference
+                    allergy.setStudent(student);
+                    student.getAllergies().add(allergy);
+                }
+            }
+        }
+    }
+
+    private void updateEmergencyContacts(Student student, Student studentDetails) {
+        // Clear existing emergency contacts
+        List<EmergencyContact> existingContacts = student.getEmergencyContacts();
+        if (existingContacts != null && !existingContacts.isEmpty()) {
+            // Remove all existing contacts
+            existingContacts.forEach(contact -> contact.setStudent(null));
+            student.getEmergencyContacts().clear();
+        }
+
+        // Add new emergency contacts from studentDetails
+        if (studentDetails.getEmergencyContacts() != null) {
+            for (EmergencyContact contact : studentDetails.getEmergencyContacts()) {
+                // Skip empty contacts (no name and no phone)
+                if ((contact.getContactName() != null && !contact.getContactName().trim().isEmpty()) ||
+                        (contact.getPhoneNumber() != null && !contact.getPhoneNumber().trim().isEmpty())) {
+
+                    // Set the student reference
+                    contact.setStudent(student);
+                    student.getEmergencyContacts().add(contact);
+                }
+            }
+        }
+    }
+
+    // Updated validateStudent method to include proper validation
+    private void validateStudent(Student student) {
+        if (student.getStudentId() == null || student.getStudentId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Student ID is required");
+        }
+
+        if (student.getFirstName() == null || student.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("First name is required");
+        }
+
+        if (student.getLastName() == null || student.getLastName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Last name is required");
+        }
+
+        if (student.getDateOfBirth() != null && student.getDateOfBirth().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Date of birth cannot be in the future");
+        }
+
+        // Validate emergency contacts if provided
+        if (student.getEmergencyContacts() != null) {
+            boolean hasAtLeastOneValidContact = false;
+
+            for (EmergencyContact contact : student.getEmergencyContacts()) {
+                if ((contact.getContactName() != null && !contact.getContactName().trim().isEmpty()) ||
+                        (contact.getPhoneNumber() != null && !contact.getPhoneNumber().trim().isEmpty())) {
+                    hasAtLeastOneValidContact = true;
+                    break;
+                }
+            }
+
+            if (!hasAtLeastOneValidContact && !student.getEmergencyContacts().isEmpty()) {
+                throw new IllegalArgumentException("Emergency contacts must have at least a name or phone number");
+            }
+        }
     }
 
     public void deleteStudent(Long id) {
@@ -199,17 +293,17 @@ public class StudentService {
         return studentRepository.existsByStudentId(studentId);
     }
 
-    private void validateStudent(Student student) {
-        if (student.getStudentId() == null || student.getStudentId().trim().isEmpty()) {
-            throw new IllegalArgumentException("Student ID is required.");
-        }
-        if (student.getFirstName() == null || student.getFirstName().trim().isEmpty()) {
-            throw new IllegalArgumentException("First name is required.");
-        }
-        if (student.getLastName() == null || student.getLastName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Last name is required.");
-        }
-    }
+//    private void validateStudent(Student student) {
+//        if (student.getStudentId() == null || student.getStudentId().trim().isEmpty()) {
+//            throw new IllegalArgumentException("Student ID is required.");
+//        }
+//        if (student.getFirstName() == null || student.getFirstName().trim().isEmpty()) {
+//            throw new IllegalArgumentException("First name is required.");
+//        }
+//        if (student.getLastName() == null || student.getLastName().trim().isEmpty()) {
+//            throw new IllegalArgumentException("Last name is required.");
+//        }
+//    }
 
 
 //    BulkUploadResponse processBulkUpload(MultipartFile file);
@@ -245,58 +339,120 @@ public class StudentService {
     private BulkUploadResponse processCSVFile(MultipartFile file, List<BulkUploadError> errors) {
         int successfulCount = 0;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+        try (Reader reader = new InputStreamReader(file.getInputStream());
              CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
 
-            List<CSVRecord> records = csvParser.getRecords();
-
-            for (int i = 0; i < records.size(); i++) {
-                CSVRecord record = records.get(i);
-                final int rowNumber = i + 2; // Make it final
-
+            for (CSVRecord record : csvParser) {
                 try {
                     Student student = createStudentFromCSVRecord(record);
 
-                    // Validate student - this adds errors if any
-                    validateStudent(student, rowNumber, errors);
+                    // Process emergency contacts from CSV record
+                    processEmergencyContactsFromCSV(student, record);
 
-                    // Check if there are any errors for this row
-                    final int currentRowNumber = rowNumber; // Create final copy for lambda
-                    boolean hasValidationErrors = errors.stream()
-                            .anyMatch(error -> error.getRowNumber() == currentRowNumber);
+                    // Process allergies from CSV record
+                    processAllergiesFromCSV(student, record);
 
-                    if (hasValidationErrors) {
-                        // Skip saving this student due to validation errors
-                        continue;
-                    }
-
-                    // Check for duplicate student ID
-                    if (studentRepository.existsByStudentId(student.getStudentId())) {
-                        errors.add(new BulkUploadError(rowNumber, student.getStudentId(),
-                                "studentId", "Student ID already exists"));
-                        continue;
-                    }
-
-                    // Save the student
+                    // Save the student with all related data
                     studentRepository.save(student);
                     successfulCount++;
 
                 } catch (Exception e) {
-                    errors.add(new BulkUploadError(rowNumber,
-                            record.isSet("Student ID") ? record.get("Student ID") : "Unknown",
-                            "General", "Error: " + e.getMessage()));
+                    int rowNum = (int) record.getRecordNumber() + 1; // +1 for header
+                    String studentId = record.get("Student ID");
+                    errors.add(new BulkUploadError(rowNum, studentId, "Data", e.getMessage()));
                 }
             }
 
-            String message = successfulCount > 0
-                    ? String.format("Successfully imported %d students. %d failed.", successfulCount, errors.size())
-                    : "No students were imported.";
-
-            return new BulkUploadResponse(message, successfulCount, errors.size(), errors);
+            return new BulkUploadResponse("File processed successfully", successfulCount, errors.size(), errors);
 
         } catch (Exception e) {
-            throw new RuntimeException("Error processing CSV file", e);
+            errors.add(new BulkUploadError(0, null, "File", "Error reading CSV file: " + e.getMessage()));
+            return new BulkUploadResponse("Failed to process file", successfulCount, errors.size(), errors);
         }
+    }
+
+    private Student createStudentFromCSVRecord(CSVRecord record) {
+        Student student = new Student();
+
+        // Set basic student info
+        student.setStudentId(record.get("Student ID"));
+        student.setFirstName(record.get("First Name"));
+        student.setLastName(record.get("Last Name"));
+        student.setGradeLevel(record.get("Grade Level"));
+        student.setHomeroom(record.get("Class"));
+
+        // Parse date of birth
+        String dobStr = record.get("Date of Birth");
+        if (dobStr != null && !dobStr.trim().isEmpty()) {
+            LocalDate dateOfBirth = LocalDate.parse(dobStr);
+            student.setDateOfBirth(dateOfBirth);
+        }
+
+        student.setGender(record.get("Gender"));
+        student.setBoardingStatus(record.get("Boarding Status"));
+
+        // Set special notes if available
+        String specialNotes = record.get("Special Notes");
+        if (specialNotes != null && !specialNotes.trim().isEmpty()) {
+            student.setSpecialNotes(specialNotes);
+        }
+
+        return student;
+    }
+
+    private void processEmergencyContactsFromCSV(Student student, CSVRecord record) {
+        List<EmergencyContact> emergencyContacts = new ArrayList<>();
+
+        // Process up to 3 emergency contacts from the CSV
+        for (int i = 1; i <= 3; i++) {
+            String name = record.get("Emergency Contact " + i + " Name");
+            String relationship = record.get("Emergency Contact " + i + " Relationship");
+            String phone = record.get("Emergency Contact " + i + " Phone");
+            String email = record.get("Emergency Contact " + i + " Email");
+            String alternatePhone = record.get("Emergency Contact " + i + " Alternate Phone");
+
+            // Only create contact if at least name or phone is provided
+            if ((name != null && !name.trim().isEmpty()) ||
+                    (phone != null && !phone.trim().isEmpty())) {
+
+                EmergencyContact contact = new EmergencyContact();
+                contact.setContactName(name != null ? name.trim() : "");
+                contact.setRelationship(relationship != null ? relationship.trim() : "");
+                contact.setPhoneNumber(phone != null ? phone.trim() : "");
+                contact.setEmail(email != null ? email.trim() : "");
+                contact.setAlternatePhone(alternatePhone != null ? alternatePhone.trim() : "");
+                contact.setIsPrimary(i == 1); // First contact is primary
+                contact.setStudent(student);
+
+                emergencyContacts.add(contact);
+            }
+        }
+
+        student.setEmergencyContacts(emergencyContacts);
+    }
+
+    private void processAllergiesFromCSV(Student student, CSVRecord record) {
+        String allergiesStr = record.get("Allergies");
+        List<Allergy> allergies = new ArrayList<>();
+
+        if (allergiesStr != null && !allergiesStr.trim().isEmpty() &&
+                !allergiesStr.equalsIgnoreCase("none")) {
+
+            // Split by comma and create Allergy objects
+            String[] allergyTypes = allergiesStr.split(",");
+            for (String allergyType : allergyTypes) {
+                String trimmedType = allergyType.trim();
+                if (!trimmedType.isEmpty()) {
+                    Allergy allergy = new Allergy();
+                    allergy.setAllergyType(trimmedType);
+                    allergy.setSeverity("Mild"); // Default severity
+                    allergy.setStudent(student);
+                    allergies.add(allergy);
+                }
+            }
+        }
+
+        student.setAllergies(allergies);
     }
 
     private BulkUploadResponse processExcelFile(MultipartFile file, List<BulkUploadError> errors) {
@@ -378,25 +534,25 @@ public class StudentService {
         }
     }
 
-    private Student createStudentFromCSVRecord(CSVRecord record) {
-        Student student = new Student();
-
-        student.setStudentId(getStringValue(record, "Student ID"));
-        student.setFirstName(getStringValue(record, "First Name"));
-        student.setLastName(getStringValue(record, "Last Name"));
-        student.setGradeLevel(getStringValue(record, "Grade Level"));
-        student.setHomeroom(getStringValue(record, "Class"));
-        student.setDateOfBirth(parseDate(getStringValue(record, "Date of Birth")));
-        student.setGender(getStringValue(record, "Gender"));
-        student.setBoardingStatus(getStringValue(record, "Boarding Status"));
-
-        // Set default values for optional fields
-        if (student.getBoardingStatus() == null || student.getBoardingStatus().isEmpty()) {
-            student.setBoardingStatus("DAY");
-        }
-
-        return student;
-    }
+//    private Student createStudentFromCSVRecord(CSVRecord record) {
+//        Student student = new Student();
+//
+//        student.setStudentId(getStringValue(record, "Student ID"));
+//        student.setFirstName(getStringValue(record, "First Name"));
+//        student.setLastName(getStringValue(record, "Last Name"));
+//        student.setGradeLevel(getStringValue(record, "Grade Level"));
+//        student.setHomeroom(getStringValue(record, "Class"));
+//        student.setDateOfBirth(parseDate(getStringValue(record, "Date of Birth")));
+//        student.setGender(getStringValue(record, "Gender"));
+//        student.setBoardingStatus(getStringValue(record, "Boarding Status"));
+//
+//        // Set default values for optional fields
+//        if (student.getBoardingStatus() == null || student.getBoardingStatus().isEmpty()) {
+//            student.setBoardingStatus("DAY");
+//        }
+//
+//        return student;
+//    }
 
     private Student createStudentFromExcelRow(Row row) {
         Student student = new Student();
